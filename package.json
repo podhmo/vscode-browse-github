@@ -27,8 +27,8 @@
     "watch": "./node_modules/typescript/bin/tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "./node_modules/eslint/bin/eslint.js src --ext ts",
-    "lint-fix": "./node_modules/eslint/bin/eslint.js src --ext --fix ts",
-    "test": "node ./out/test/runTest.js"
+    "lint-fix": "./node_modules/eslint/bin/eslint.js src --ext ts --fix",
+    "test": "node ./src/test/runTest.js"
   },
   "devDependencies": {
     "@types/glob": "^8.0.0",
