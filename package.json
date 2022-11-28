@@ -1,5 +1,5 @@
 {
-  "name": "vscode-browse-github",
+  "name": "browse-github",
   "displayName": "browse-github",
   "description": "browse current file in github",
   "version": "0.0.1",
@@ -10,36 +10,41 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:vscode-browse-github.helloWorld"
+    "onCommand:browse-github.helloWorld"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "vscode-browse-github.helloWorld",
+        "command": "browse-github.helloWorld",
         "title": "Hello World"
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "compile": "./node_modules/typescript/bin/tsc -p ./",
+    "watch": "./node_modules/typescript/bin/tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
+    "lint": "./node_modules/eslint/bin/eslint.js src --ext ts",
+    "lint-fix": "./node_modules/eslint/bin/eslint.js src --ext --fix ts",
     "test": "node ./out/test/runTest.js"
   },
   "devDependencies": {
-    "@types/vscode": "^1.73.0",
     "@types/glob": "^8.0.0",
     "@types/mocha": "^10.0.0",
     "@types/node": "16.x",
-    "@typescript-eslint/eslint-plugin": "^5.42.0",
+    "@types/vscode": "^1.73.1",
+    "@typescript-eslint/eslint-plugin": "^5.44.0",
     "@typescript-eslint/parser": "^5.42.0",
-    "eslint": "^8.26.0",
+    "@vscode/test-electron": "^2.2.0",
+    "eslint": "^8.28.0",
+    "eslint-config-standard-with-typescript": "^23.0.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-n": "^15.5.1",
+    "eslint-plugin-promise": "^6.1.1",
     "glob": "^8.0.3",
     "mocha": "^10.1.0",
-    "typescript": "^4.8.4",
-    "@vscode/test-electron": "^2.2.0"
+    "typescript": "^4.9.3"
   }
 }
