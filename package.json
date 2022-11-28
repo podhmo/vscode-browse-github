@@ -23,11 +23,11 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "./node_modules/typescript/bin/tsc -p ./",
-    "watch": "./node_modules/typescript/bin/tsc -watch -p ./",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
-    "lint": "./node_modules/eslint/bin/eslint.js src --ext ts",
-    "lint-fix": "./node_modules/eslint/bin/eslint.js src --ext ts --fix",
+    "lint": "eslint src --ext ts",
+    "lint-fix": "eslint src --ext ts --fix",
     "test": "node ./src/test/runTest.js"
   },
   "devDependencies": {
