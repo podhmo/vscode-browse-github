@@ -1,4 +1,5 @@
 {
+  "publisher": "podhmo",
   "name": "browse-github",
   "displayName": "browse-github",
   "description": "browse current file in github",
@@ -13,6 +14,10 @@
     "onCommand:browse-github.helloWorld"
   ],
   "main": "./out/extension.js",
+  "extensionKind": [
+    "workspace",
+    "ui"
+  ],
   "contributes": {
     "commands": [
       {

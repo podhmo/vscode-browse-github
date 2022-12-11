@@ -20,6 +20,8 @@ interface Params {
 }
 
 export function url ({ branch, file, lineno }: { branch?: string, file: string, lineno?: number }): string {
+  console.log(execSync('pwd').toString())
+  console.log(execSync('ls').toString())
   return build(parse({ branch, file, lineno }))
 }
 
