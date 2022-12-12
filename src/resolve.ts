@@ -15,14 +15,10 @@ interface Params {
   owner?: string
   repository?: string
 
+  cwd?: string
+
   file?: string
   lineno?: number
-}
-
-export function url ({ branch, file, lineno }: { branch?: string, file: string, lineno?: number }): string {
-  console.log(execSync('pwd').toString())
-  console.log(execSync('ls').toString())
-  return build(parse({ branch, file, lineno }))
 }
 
 export function build (info: Info): string {
@@ -39,12 +35,12 @@ export function build (info: Info): string {
   return parts.join('')
 }
 
-export function parse ({ branch, owner, repository, file, lineno }: Params): Info {
+export function parse ({ branch, owner, repository, file, lineno, cwd }: Params): Info {
   if (branch === undefined || branch === '') {
-    branch = execSync('git branch --show-current').toString().trim()
+    branch = execSync('git branch --show-current', { cwd }).toString().trim()
   }
 
-  const originURL = execSync('git config --get remote.origin.url').toString().trim()
+  const originURL = execSync('git config --get remote.origin.url', { cwd }).toString().trim()
   return parseFromURL({ branch, owner, repository, file, lineno }, originURL)
 }
 
@@ -89,5 +85,5 @@ export function parseFromURL ({ branch, owner, repository, file, lineno }: Param
 if (require.main === module) {
   console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'))
   console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'))
-  console.log(url({ branch: 'master', file: './src/extension.ts', lineno: 8 }))
+  console.log(build(parse({ branch: 'master', file: './src/extension.ts', lineno: 8 })))
 }
