@@ -29,7 +29,17 @@
         "command": "browse-github.with-default-branch",
         "title": "browse github (default branch)"
       }
-    ]
+    ],
+    "configuration": {
+      "type": "object",
+      "title": "browse-github",
+      "properties": {
+        "browse-github.default-branch": {
+          "type": "string",
+          "description": "default branch"
+        }
+      }
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",

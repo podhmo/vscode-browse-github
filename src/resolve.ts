@@ -41,7 +41,7 @@ export function build (info: Info): string {
 
 export function parse ({ branch, owner, repository, file, cwd }: Params): Info {
   if (branch === undefined || branch === '') {
-    branch = execSync('git branch --show-current', { cwd }).toString().trim()
+    branch = currentBranch({ cwd })
   }
 
   const originURL = execSync('git config --get remote.origin.url', { cwd }).toString().trim()
@@ -83,6 +83,15 @@ export function parseFromURL ({ branch, owner, repository, file }: Params, origi
   return { owner, branch, repository, file, start: 0, end: 0, raw: { url: originURL } }
 }
 
+export function currentBranch ({ cwd }: { cwd?: string }): string {
+  return execSync('git branch --show-current', { cwd }).toString().trim()
+}
+export function defaultBranch ({ cwd }: { cwd?: string }): string {
+  const parts = execSync('git symbolic-ref refs/remotes/origin/HEAD', { cwd }).toString().trim().split('/')
+  return parts[parts.length - 1]
+}
+
+// test code
 if (require.main === module) {
   console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'))
   console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'))

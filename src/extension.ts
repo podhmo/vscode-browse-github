@@ -20,7 +20,7 @@ async function guessRootDirectory (): Promise<Uri> {
   throw new Error('git repository directory is not found')
 }
 
-async function browseGithub ({ branch }: { branch?: string }): Promise<void> {
+async function browseGithub ({ getBranch, branch }: { branch?: string, getBranch: ({ cwd }: { cwd?: string }) => string }): Promise<void> {
   const editor = window.activeTextEditor
   if (editor === undefined) {
     void window.showErrorMessage('The active editor is not found')
@@ -39,14 +39,17 @@ async function browseGithub ({ branch }: { branch?: string }): Promise<void> {
     const repoDirUri = await guessRootDirectory()
     const relPath = document.uri.fsPath.replace(repoDirUri.fsPath + '/', '')
 
+    if (branch === undefined || branch === '') {
+      branch = getBranch({ cwd: repoDirUri.fsPath })
+    }
     const info = resolve.parse({ file: relPath, branch, cwd: repoDirUri.fsPath })
     info.start = selection.active.line + 1
     if (selection.start !== selection.end) {
       info.start = document.lineAt(selection.start).lineNumber + 1
       info.end = document.lineAt(selection.end).lineNumber + 1
     }
-    const repoURL = resolve.build(info)
 
+    const repoURL = resolve.build(info)
     void env.openExternal(Uri.parse(repoURL))
   } catch (err) {
     if (err instanceof Error) {
@@ -67,13 +70,18 @@ export function activate (context: ExtensionContext): void {
   // The commandId parameter must match the command field in package.json
   {
     const disposable = commands.registerCommand('browse-github.with-current-branch', async () => {
-      await browseGithub({})
+      await browseGithub({ getBranch: resolve.currentBranch })
     })
     context.subscriptions.push(disposable)
   }
   {
     const disposable = commands.registerCommand('browse-github.with-default-branch', async () => {
-      await browseGithub({ branch: 'main' }) // TODO: set by input
+      const configuration = workspace.getConfiguration('browse-github')
+      let branch: string | undefined
+      if (configuration.has('default-branch')) {
+        branch = configuration.get('default-branch')
+      }
+      await browseGithub({ branch, getBranch: resolve.defaultBranch })
     })
     context.subscriptions.push(disposable)
   }
