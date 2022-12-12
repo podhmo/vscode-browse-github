@@ -3,6 +3,9 @@
   "name": "browse-github",
   "displayName": "browse-github",
   "description": "browse current file in github",
+  "repository": {
+    "url": "https://github.com/podhmo/vscode-browse-github"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.73.0"
