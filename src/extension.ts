@@ -20,52 +20,63 @@ async function guessRootDirectory (): Promise<Uri> {
   throw new Error('git repository directory is not found')
 }
 
+async function browseGithub ({ branch }: { branch?: string }): Promise<void> {
+  const editor = window.activeTextEditor
+  if (editor === undefined) {
+    void window.showErrorMessage('The active editor is not found')
+    return
+  }
+
+  const wf = workspace.getWorkspaceFolder(editor.document.uri)
+  if (wf === undefined) {
+    void window.showErrorMessage('Please, set the workspace folder')
+    return
+  }
+
+  const document = editor.document
+  const selection = editor.selection
+  try {
+    const repoDirUri = await guessRootDirectory()
+    const relPath = document.uri.fsPath.replace(repoDirUri.fsPath + '/', '')
+
+    const info = resolve.parse({ file: relPath, branch, cwd: repoDirUri.fsPath })
+    info.start = selection.active.line + 1
+    if (selection.start !== selection.end) {
+      info.start = document.lineAt(selection.start).lineNumber + 1
+      info.end = document.lineAt(selection.end).lineNumber + 1
+    }
+    const repoURL = resolve.build(info)
+
+    void env.openExternal(Uri.parse(repoURL))
+  } catch (err) {
+    if (err instanceof Error) {
+      await window.showErrorMessage(`${err.message}`)
+    } else if (typeof err === 'string') {
+      await window.showErrorMessage(`${err}`)
+    } else {
+      await window.showErrorMessage('unexpected error')
+    }
+  }
+}
+
 export function activate (context: ExtensionContext): void {
   console.log('Congratulations, your extension "vscode-browse-github" is now active!')
 
   // The command has been defined in the package.json file
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
-  const disposable = commands.registerCommand('browse-github.helloWorld', async () => {
-    const editor = window.activeTextEditor
-    if (editor === undefined) {
-      void window.showErrorMessage('The active editor is not found')
-      return
-    }
-
-    const wf = workspace.getWorkspaceFolder(editor.document.uri)
-    if (wf === undefined) {
-      void window.showErrorMessage('Please, set the workspace folder')
-      return
-    }
-
-    const document = editor.document
-    const selection = editor.selection
-    try {
-      const repoDirUri = await guessRootDirectory()
-      const relPath = document.uri.fsPath.replace(repoDirUri.fsPath + '/', '')
-
-      const info = resolve.parse({ branch: 'main', file: relPath, cwd: repoDirUri.fsPath })
-      info.start = selection.active.line + 1
-      if (selection.start !== selection.end) {
-        info.start = document.lineAt(selection.start).lineNumber + 1
-        info.end = document.lineAt(selection.end).lineNumber + 1
-      }
-      const repoURL = resolve.build(info)
-
-      void env.openExternal(Uri.parse(repoURL))
-    } catch (err) {
-      if (err instanceof Error) {
-        await window.showErrorMessage(`${err.message}`)
-      } else if (typeof err === 'string') {
-        await window.showErrorMessage(`${err}`)
-      } else {
-        await window.showErrorMessage('unexpected error')
-      }
-    }
-  })
-
-  context.subscriptions.push(disposable)
+  {
+    const disposable = commands.registerCommand('browse-github.with-current-branch', async () => {
+      await browseGithub({})
+    })
+    context.subscriptions.push(disposable)
+  }
+  {
+    const disposable = commands.registerCommand('browse-github.with-default-branch', async () => {
+      await browseGithub({ branch: 'main' }) // TODO: set by input
+    })
+    context.subscriptions.push(disposable)
+  }
 }
 
 // This method is called when your extension is deactivated
