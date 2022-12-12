@@ -26,6 +26,6 @@ $ docker run --rm -it -v "$(pwd)":/workspace vsce package
 
 ## Release Notes
 
-### 0.1.0
+### 0.0.1
 
 Initial release
