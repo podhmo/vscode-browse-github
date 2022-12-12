@@ -5,9 +5,11 @@ interface Info {
   branch: string
   repository: string
   file: string
-  lineno: number
 
-  raw: { url: string, lineno?: number, file?: string }
+  start: number // lineno
+  end: number // lineno
+
+  raw: { url: string, file?: string }
 }
 
 interface Params {
@@ -18,7 +20,6 @@ interface Params {
   cwd?: string
 
   file?: string
-  lineno?: number
 }
 
 export function build (info: Info): string {
@@ -29,22 +30,25 @@ export function build (info: Info): string {
   if (info.file !== '') {
     parts.push(info.file)
   }
-  if (info.lineno !== 0) {
-    parts.push(`#L${info.lineno}`)
+  if (info.start > 0) {
+    parts.push(`#L${info.start}`)
+    if (info.end > 0 && info.start !== info.end) {
+      parts.push(`-#L${info.end}`)
+    }
   }
   return parts.join('')
 }
 
-export function parse ({ branch, owner, repository, file, lineno, cwd }: Params): Info {
+export function parse ({ branch, owner, repository, file, cwd }: Params): Info {
   if (branch === undefined || branch === '') {
     branch = execSync('git branch --show-current', { cwd }).toString().trim()
   }
 
   const originURL = execSync('git config --get remote.origin.url', { cwd }).toString().trim()
-  return parseFromURL({ branch, owner, repository, file, lineno }, originURL)
+  return parseFromURL({ branch, owner, repository, file }, originURL)
 }
 
-export function parseFromURL ({ branch, owner, repository, file, lineno }: Params, originURL: string): Info {
+export function parseFromURL ({ branch, owner, repository, file }: Params, originURL: string): Info {
   if (branch === undefined) {
     branch = 'main'
   }
@@ -53,9 +57,6 @@ export function parseFromURL ({ branch, owner, repository, file, lineno }: Param
   }
   if (repository === undefined) {
     repository = ''
-  }
-  if (lineno === undefined) {
-    lineno = 0
   }
   if (file === undefined) {
     file = ''
@@ -79,11 +80,11 @@ export function parseFromURL ({ branch, owner, repository, file, lineno }: Param
       }
     }
   }
-  return { owner, branch, repository, file, lineno, raw: { url: originURL } }
+  return { owner, branch, repository, file, start: 0, end: 0, raw: { url: originURL } }
 }
 
 if (require.main === module) {
   console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'))
   console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'))
-  console.log(build(parse({ branch: 'master', file: './src/extension.ts', lineno: 8 })))
+  console.log(build(parse({ branch: 'master', file: './src/extension.ts' })))
 }

@@ -1,4 +1,4 @@
-import { window, commands, workspace, Uri, ExtensionContext } from 'vscode'
+import { env, window, commands, workspace, Uri, ExtensionContext } from 'vscode'
 import * as resolve from './resolve'
 
 async function guessRootDirectory (): Promise<Uri> {
@@ -27,10 +27,6 @@ export function activate (context: ExtensionContext): void {
   // Now provide the implementation of the command with registerCommand
   // The commandId parameter must match the command field in package.json
   const disposable = commands.registerCommand('browse-github.helloWorld', async () => {
-    // const githubURL = resolve.url({ file: 'src/extension.ts', lineno: 8 })
-    // console.log(githubURL)
-    // return vscode.env.openExternal(vscode.Uri.parse(githubURL))
-
     const editor = window.activeTextEditor
     if (editor === undefined) {
       void window.showErrorMessage('The active editor is not found')
@@ -44,14 +40,21 @@ export function activate (context: ExtensionContext): void {
     }
 
     const document = editor.document
-    // const selection = editor.selection
+    const selection = editor.selection
     try {
       const repoDirUri = await guessRootDirectory()
-      const relPath = document.uri.fsPath.replace(repoDirUri.fsPath, './')
-      const repoURL = resolve.url({ branch: 'master', file: relPath })
-      void window.showInformationMessage(`browse github ${repoURL}`)
+      const relPath = document.uri.fsPath.replace(repoDirUri.fsPath + '/', '')
+
+      const info = resolve.parse({ branch: 'main', file: relPath, cwd: repoDirUri.fsPath })
+      info.start = selection.active.line + 1
+      if (selection.start !== selection.end) {
+        info.start = document.lineAt(selection.start).lineNumber + 1
+        info.end = document.lineAt(selection.end).lineNumber + 1
+      }
+      const repoURL = resolve.build(info)
+
+      void env.openExternal(Uri.parse(repoURL))
     } catch (err) {
-      console.log(err)
       if (err instanceof Error) {
         await window.showErrorMessage(`${err.message}`)
       } else if (typeof err === 'string') {
@@ -60,17 +63,6 @@ export function activate (context: ExtensionContext): void {
         await window.showErrorMessage('unexpected error')
       }
     }
-
-    // const start = document.lineAt(selection.start).lineNumber
-    // const end = document.lineAt(selection.end).lineNumber
-
-    // const text = document.getText(selection)
-    // void window.showInformationMessage(`
-    // workspace:${wf.uri.fsPath}
-    // file:${document.uri.fsPath}
-    // selection:${start} ~ ${end}
-
-    // ${text}`)
   })
 
   context.subscriptions.push(disposable)
