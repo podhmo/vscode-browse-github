@@ -80,6 +80,9 @@ export function parseFromURL ({ branch, owner, repository, file }: Params, origi
       }
     }
   }
+  if (repository.endsWith('.git')) {
+    repository = repository.slice(0, -4)
+  }
   return { owner, branch, repository, file, start: 0, end: 0, raw: { url: originURL } }
 }
 
@@ -95,5 +98,6 @@ export function defaultBranch ({ cwd }: { cwd?: string }): string {
 if (require.main === module) {
   console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'))
   console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'))
+  console.log(parseFromURL({ branch: 'master' }, 'git@github.com:podhmo/vscode-browse-github.git'))
   console.log(build(parse({ branch: 'master', file: './src/extension.ts' })))
 }
