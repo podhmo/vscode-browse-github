@@ -1,4 +1,7 @@
-import { execSync } from 'child_process'
+import { exec } from 'child_process'
+import { promisify } from 'util'
+
+const execAsync = promisify(exec)
 
 interface Info {
   owner: string
@@ -39,12 +42,13 @@ export function build (info: Info): string {
   return parts.join('')
 }
 
-export function parse ({ branch, owner, repository, file, cwd }: Params): Info {
+export async function parse ({ branch, owner, repository, file, cwd }: Params): Promise<Info> {
   if (branch === undefined || branch === '') {
-    branch = currentBranch({ cwd })
+    branch = await currentBranch({ cwd })
   }
 
-  const originURL = execSync('git config --get remote.origin.url', { cwd }).toString().trim()
+  const { stdout } = await execAsync('git config --get remote.origin.url', { cwd })
+  const originURL = stdout.trim()
   return parseFromURL({ branch, owner, repository, file }, originURL)
 }
 
@@ -86,18 +90,32 @@ export function parseFromURL ({ branch, owner, repository, file }: Params, origi
   return { owner, branch, repository, file, start: 0, end: 0, raw: { url: originURL } }
 }
 
-export function currentBranch ({ cwd }: { cwd?: string }): string {
-  return execSync('git branch --show-current', { cwd }).toString().trim()
+export async function currentBranch ({ cwd }: { cwd?: string }): Promise<string> {
+  try {
+    const { stdout } = await execAsync('git branch --show-current', { cwd })
+    return stdout.trim()
+  } catch (err) {
+    // Fallback for detached HEAD state
+    console.warn('Could not get current branch with "git branch --show-current", falling back to "git rev-parse".', err)
+    const { stdout } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd })
+    return stdout.trim()
+  }
 }
-export function defaultBranch ({ cwd }: { cwd?: string }): string {
-  const parts = execSync('git symbolic-ref refs/remotes/origin/HEAD', { cwd }).toString().trim().split('/')
+export async function defaultBranch ({ cwd }: { cwd?: string }): Promise<string> {
+  const { stdout } = await execAsync('git symbolic-ref refs/remotes/origin/HEAD', { cwd })
+  const parts = stdout.trim().split('/')
   return parts[parts.length - 1]
 }
 
 // test code
 if (require.main === module) {
-  console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'))
-  console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'))
-  console.log(parseFromURL({ branch: 'master' }, 'git@github.com:podhmo/vscode-browse-github.git'))
-  console.log(build(parse({ branch: 'master', file: './src/extension.ts' })))
+  (async () => {
+    console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'))
+    console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'))
+    console.log(parseFromURL({ branch: 'master' }, 'git@github.com:podhmo/vscode-browse-github.git'))
+    console.log(build(await parse({ branch: 'master', file: './src/extension.ts' })))
+  })().catch(err => {
+    console.error(err)
+    process.exit(1)
+  })
 }

@@ -20,15 +20,14 @@ async function guessRootDirectory (): Promise<Uri> {
   throw new Error('git repository directory is not found')
 }
 
-async function browseGithub ({ getBranch, branch }: { branch?: string, getBranch: ({ cwd }: { cwd?: string }) => string }): Promise<void> {
+async function browseGithub ({ getBranch, branch }: { branch?: string, getBranch: ({ cwd }: { cwd?: string }) => Promise<string> }): Promise<void> {
   const editor = window.activeTextEditor
   if (editor === undefined) {
     void window.showErrorMessage('The active editor is not found')
     return
   }
 
-  const wf = workspace.getWorkspaceFolder(editor.document.uri)
-  if (wf === undefined) {
+  if (workspace.getWorkspaceFolder(editor.document.uri) === undefined) {
     void window.showErrorMessage('Please, set the workspace folder')
     return
   }
@@ -40,9 +39,9 @@ async function browseGithub ({ getBranch, branch }: { branch?: string, getBranch
     const relPath = document.uri.fsPath.replace(repoDirUri.fsPath + '/', '')
 
     if (branch === undefined || branch === '') {
-      branch = getBranch({ cwd: repoDirUri.fsPath })
+      branch = await getBranch({ cwd: repoDirUri.fsPath })
     }
-    const info = resolve.parse({ file: relPath, branch, cwd: repoDirUri.fsPath })
+    const info = await resolve.parse({ file: relPath, branch, cwd: repoDirUri.fsPath })
     info.start = selection.active.line + 1
     if (selection.start !== selection.end) {
       info.start = document.lineAt(selection.start).lineNumber + 1
