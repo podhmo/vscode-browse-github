@@ -19,9 +19,9 @@ This extension contributes the following settings:
 
 see: https://code.visualstudio.com/api/advanced-topics/remote-extensions#installing-a-development-version-of-your-extension
 
-```console
-$ DOCKER_BUILDKIT=1 docker build --tag vsce "https://github.com/microsoft/vscode-vsce.git#main"
-$ docker run --rm -it -v "$(pwd)":/workspace vsce package
+```sh
+DOCKER_BUILDKIT=1 docker build --tag vsce "https://github.com/microsoft/vscode-vsce.git#main"
+docker run --rm -it -v "$(pwd)":/workspace vsce package
 ```
 
 ## Release Notes
