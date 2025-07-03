@@ -27,8 +27,7 @@ async function browseGithub({ getBranch, branch }) {
         void vscode_1.window.showErrorMessage('The active editor is not found');
         return;
     }
-    const wf = vscode_1.workspace.getWorkspaceFolder(editor.document.uri);
-    if (wf === undefined) {
+    if (vscode_1.workspace.getWorkspaceFolder(editor.document.uri) === undefined) {
         void vscode_1.window.showErrorMessage('Please, set the workspace folder');
         return;
     }
@@ -38,9 +37,9 @@ async function browseGithub({ getBranch, branch }) {
         const repoDirUri = await guessRootDirectory();
         const relPath = document.uri.fsPath.replace(repoDirUri.fsPath + '/', '');
         if (branch === undefined || branch === '') {
-            branch = getBranch({ cwd: repoDirUri.fsPath });
+            branch = await getBranch({ cwd: repoDirUri.fsPath });
         }
-        const info = resolve.parse({ file: relPath, branch, cwd: repoDirUri.fsPath });
+        const info = await resolve.parse({ file: relPath, branch, cwd: repoDirUri.fsPath });
         info.start = selection.active.line + 1;
         if (selection.start !== selection.end) {
             info.start = document.lineAt(selection.start).lineNumber + 1;

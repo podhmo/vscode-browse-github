@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.defaultBranch = exports.currentBranch = exports.parseFromURL = exports.parse = exports.build = void 0;
 const child_process_1 = require("child_process");
+const util_1 = require("util");
+const execAsync = (0, util_1.promisify)(child_process_1.exec);
 function build(info) {
     const parts = [`https://github.com/${info.owner}/${info.repository}/`];
     if (info.branch !== '') {
@@ -19,11 +21,12 @@ function build(info) {
     return parts.join('');
 }
 exports.build = build;
-function parse({ branch, owner, repository, file, cwd }) {
+async function parse({ branch, owner, repository, file, cwd }) {
     if (branch === undefined || branch === '') {
-        branch = currentBranch({ cwd });
+        branch = await currentBranch({ cwd });
     }
-    const originURL = (0, child_process_1.execSync)('git config --get remote.origin.url', { cwd }).toString().trim();
+    const { stdout } = await execAsync('git config --get remote.origin.url', { cwd });
+    const originURL = stdout.trim();
     return parseFromURL({ branch, owner, repository, file }, originURL);
 }
 exports.parse = parse;
@@ -64,20 +67,35 @@ function parseFromURL({ branch, owner, repository, file }, originURL) {
     return { owner, branch, repository, file, start: 0, end: 0, raw: { url: originURL } };
 }
 exports.parseFromURL = parseFromURL;
-function currentBranch({ cwd }) {
-    return (0, child_process_1.execSync)('git branch --show-current', { cwd }).toString().trim();
+async function currentBranch({ cwd }) {
+    try {
+        const { stdout } = await execAsync('git branch --show-current', { cwd });
+        return stdout.trim();
+    }
+    catch (err) {
+        // Fallback for detached HEAD state
+        console.warn('Could not get current branch with "git branch --show-current", falling back to "git rev-parse".', err);
+        const { stdout } = await execAsync('git rev-parse --abbrev-ref HEAD', { cwd });
+        return stdout.trim();
+    }
 }
 exports.currentBranch = currentBranch;
-function defaultBranch({ cwd }) {
-    const parts = (0, child_process_1.execSync)('git symbolic-ref refs/remotes/origin/HEAD', { cwd }).toString().trim().split('/');
+async function defaultBranch({ cwd }) {
+    const { stdout } = await execAsync('git symbolic-ref refs/remotes/origin/HEAD', { cwd });
+    const parts = stdout.trim().split('/');
     return parts[parts.length - 1];
 }
 exports.defaultBranch = defaultBranch;
 // test code
 if (require.main === module) {
-    console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'));
-    console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'));
-    console.log(parseFromURL({ branch: 'master' }, 'git@github.com:podhmo/vscode-browse-github.git'));
-    console.log(build(parse({ branch: 'master', file: './src/extension.ts' })));
+    (async () => {
+        console.log(parseFromURL({ branch: 'master' }, 'ssh://git@github.com/podhmo/vscode-browse-github'));
+        console.log(parseFromURL({ branch: 'master' }, 'https://github.com/podhmo/vscode-browse-github.git'));
+        console.log(parseFromURL({ branch: 'master' }, 'git@github.com:podhmo/vscode-browse-github.git'));
+        console.log(build(await parse({ branch: 'master', file: './src/extension.ts' })));
+    })().catch(err => {
+        console.error(err);
+        process.exit(1);
+    });
 }
 //# sourceMappingURL=resolve.js.map
