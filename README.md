@@ -17,6 +17,16 @@ This extension contributes the following settings:
 
 ## manual install
 
+### local
+
+```sh
+npm install
+npm run build
+# generate *.vsix
+```
+
+### docker
+
 see: https://code.visualstudio.com/api/advanced-topics/remote-extensions#installing-a-development-version-of-your-extension
 
 ```sh
